@@ -30,3 +30,26 @@
 .matrix-table tr:last-child td {
   border-bottom: 1px solid transparent;
 }
+
+.mode-selector {
+  display: block;
+  list-style: none;
+  padding: 0;
+}
+
+.mode-selector li {
+  display: inline-block;
+  margin: 1em;
+  padding: 0.5em 1em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.mode-selector li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mode-selector li.active {
+  border-color: #ffffff;
+}

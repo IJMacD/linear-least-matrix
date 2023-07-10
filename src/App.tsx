@@ -1,12 +1,25 @@
 import { useState } from 'react'
 import './App.css'
+import { Graph } from './Graph';
+import { transpose, mul, inv } from './matrix';
+
+enum Mode {
+  "y=b1",
+  "y=b1x",
+  "y=b1+b2x",
+  "y=b1x^2",
+  "y=b1+b2x^2",
+  "y=b1+b2x+b3x^2",
+};
 
 function App() {
-  const [yInput,setYInput] = useState("");
-  const [xInput,setXInput] = useState("");
+  const [pointsInput,setPointsInput] = useState("");
+  const [mode, setMode] = useState(Mode['y=b1+b2x']);
 
-  const yValues = parseMatrix(yInput);
-  const xValues = parseMatrix(xInput);
+  const points = parsePoints(pointsInput);
+
+  const yValues = points.map(p => [p[1]]);
+  const xValues = getXValues(mode, points);
 
   const xt = transpose(xValues);
   const xtx = mul(xt, xValues);
@@ -14,16 +27,32 @@ function App() {
   const inv_xtx_xt = mul(inv_xtx, xt);
   const beta = mul(inv_xtx_xt, yValues);
 
+  const trendFn = getTrendFn(mode, beta);
+
   return (
     <>
-      <textarea value={yInput} onChange={e => setYInput(e.target.value)} placeholder='Y values' style={{height: 80}}/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <textarea value={pointsInput} onChange={e => setPointsInput(e.target.value)} placeholder='Points' style={{height: 80}}/>
+        <Graph points={points} trendFn={trendFn} />
+        <TrendlineDisplay mode={mode} coefficients={beta} />
+      </div>
+      <p>
+        <b>y</b> = <b>X</b> β
+      </p>
+      <ul className='mode-selector'>
+        <li className={mode === Mode['y=b1']?"active":""} onClick={() => setMode(Mode['y=b1'])}>y = β<sub>1</sub></li>
+        <li className={mode === Mode['y=b1x']?"active":""} onClick={() => setMode(Mode['y=b1x'])}>y = β<sub>1</sub> x</li>
+        <li className={mode === Mode['y=b1+b2x']?"active":""} onClick={() => setMode(Mode['y=b1+b2x'])}>y = β<sub>1</sub> + β<sub>2</sub> x</li>
+        <li className={mode === Mode['y=b1x^2']?"active":""} onClick={() => setMode(Mode['y=b1x^2'])}>y = β<sub>1</sub> x<sup>2</sup></li>
+        <li className={mode === Mode['y=b1+b2x^2']?"active":""} onClick={() => setMode(Mode['y=b1+b2x^2'])}>y = β<sub>1</sub> + β<sub>2</sub> x<sup>2</sup></li>
+        <li className={mode === Mode['y=b1+b2x+b3x^2']?"active":""} onClick={() => setMode(Mode['y=b1+b2x+b3x^2'])}>y = β<sub>1</sub> + β<sub>2</sub> x + β<sub>3</sub> x<sup>2</sup></li>
+      </ul>
       <div style={{display:"flex",margin:10}}>
         <p>
           y =
         </p>
         <MatrixDisplay values={yValues} />
       </div>
-      <textarea value={xInput} onChange={e => setXInput(e.target.value)} placeholder='X values' style={{height: 80}}/>
       <div style={{display:"flex",margin:10}}>
         <p>
           X =
@@ -57,6 +86,7 @@ function App() {
       <div style={{display:"flex",margin:10}}>
         <p>
           β =
+          (X<sup>T</sup> X)<sup>-1</sup> X<sup>T</sup> y =
         </p>
         <MatrixDisplay values={beta} />
       </div>
@@ -66,120 +96,75 @@ function App() {
 
 export default App
 
+function getXValues(mode: Mode, points: number[][]) {
+  if (mode === Mode['y=b1']) {
+    return points.map(() => [1]);
+  }
+
+  if (mode === Mode['y=b1x']) {
+    return points.map(p => [p[0]]);
+  }
+
+  if (mode === Mode['y=b1+b2x']) {
+    return points.map(p => [1, p[0]]);
+  }
+
+  if (mode === Mode['y=b1x^2']) {
+    return points.map(p => [p[0] * p[0]]);
+  }
+
+  if (mode === Mode['y=b1+b2x^2']) {
+    return points.map(p => [1, p[0] * p[0]]);
+  }
+
+  if (mode === Mode['y=b1+b2x+b3x^2']) {
+    return points.map(p => [1, p[0], p[0] * p[0]])
+  }
+
+  return [];
+}
+
+function getTrendFn(mode: Mode, beta: number[][]) {
+  if (beta.length === 0) return undefined;
+
+  if (mode === Mode['y=b1']) {
+    return () => beta[0][0];
+  }
+
+  if (mode === Mode['y=b1x']) {
+    return (x: number) => beta[0][0] * x;
+  }
+
+  if (mode === Mode['y=b1+b2x']) {
+    return (x: number) => beta[0][0] + beta[1][0] * x;
+  }
+
+  if (mode === Mode['y=b1x^2']) {
+    return (x: number) => beta[0][0] * x * x;
+  }
+
+  if (mode === Mode['y=b1+b2x^2']) {
+    return (x: number) => beta[0][0] + beta[1][0] * x * x;
+  }
+
+  if (mode === Mode['y=b1+b2x+b3x^2']) {
+    return (x: number) => beta[0][0] + beta[1][0] * x + beta[2][0] * x * x;
+  }
+
+  return undefined;
+}
+
 function MatrixDisplay({ values }: { values: number[][] }) {
   return (
     <table className='matrix-table'>
       <tbody>
-        {values.map((line, i) => <tr key={i}>{line.map((v, j) => <td key={j}>{niceIEE754(v)}</td>)}</tr>)}
+        {values.map((line, i) => <tr key={i}>{line.map((v, j) => <td key={j}>{niceIEEE754(v)}</td>)}</tr>)}
       </tbody>
     </table>
   );
 }
 
-function parseMatrix(input: string) {
-  return input.split("\n").filter(l => l.length).map(line => line.trim().replace(/,/g, " ").split(/\s+/).map(s => +s));
-}
-// j =        0  1
-//        [
-// i = 0    [ 0, 1 ],
-//        ]
-
-// out
-// j =         0
-//        [
-// i = 0     [ 0 ],
-// i = 1     [ 1 ],
-//        ]
-
-
-
-function transpose (values: number[][]) {
-  const out = [] as number[][];
-  if (values.length === 0) return out;
-  for (let i = 0; i < values[0].length; i++) {
-    out[i] = [] as number[];
-    for (let j = 0; j < values.length; j++) {
-      out[i][j] = values[j][i];
-    }
-  }
-  return out;
-}
-
-function mul (a: number[][], b: number[][]) {
-  if (a.length === 0 || b.length === 0) return [];
-
-  const h = a.length;
-  const w = b[0].length;
-
-  const n = b.length;
-
-  if (a[0].length != n) return [];
-    //{ throw Error(`Cannot multiply matrices ${w}x${n} by ${b.length}x${h}`); }
-
-  const out: number[][] = [];
-
-  for (let i = 0; i < h; i++) {
-    out[i] = [];
-    for (let j = 0; j < w; j++) {
-      let sum = 0;
-      for (let k = 0; k < n; k++) {
-        sum += a[i][k] * b[k][j];
-      }
-      out[i][j] = sum;
-    }
-  }
-
-  return out;
-}
-
-function adj (a: number[][]) {
-  const w = a.length;
-
-  if (w === 0) return [];
-
-  const h = a[0].length;
-
-  if (w === 2 && h == 2) {
-    return [[a[1][1],-a[0][1]],[-a[1][0],a[0][0]]];
-  }
-
-  return [];
-
-  // throw Error(`Cannot compute adjuct of ${h}x${w} matrix`);
-}
-
-function det (a: number[][]) {
-  const w = a.length;
-
-  if (w === 0) return 1;
-
-  const h = a[0].length;
-
-  if (w === 2 && h == 2) {
-    return a[0][0] * a[1][1] - a[0][1] * a[1][0];
-  }
-
-  return 1;
-
-  // throw Error(`Cannot compute determinate of ${h}x${w} matrix`);
-}
-
-function scalarMul (a: number[][], s: number) {
-  const out = [] as number[][];
-  for (let i = 0; i < a.length; i++) {
-    out[i] = [];
-    for (let j = 0; j < a[0].length; j++) {
-      out[i][j] = a[i][j] * s;
-    }
-  }
-  return out;
-}
-
-function inv (a: number[][]) {
-  return scalarMul(adj(a), 1 / det(a));
-}
-
-function niceIEE754 (n: number) {
+function niceIEEE754 (n: number) {
   if (!n) return n;
   const s = n.toString();
   const dp = s.indexOf(".");
@@ -188,4 +173,42 @@ function niceIEE754 (n: number) {
     return n.toFixed(a.index);
   }
   return s;
+}
+
+function parsePoints (input: string) {
+  return input.split("\n").filter(l => l.length).map(line => line.trim().replace(/[^-\d,.\s]/g, "").split(/[,\s]+/,2).map(s => +s));
+}
+
+function TrendlineDisplay ({ mode, coefficients }: { mode: Mode, coefficients: number[][] }) {
+  if (coefficients.length === 0) return null;
+
+  if (mode === Mode['y=b1']) {
+    return <span>y = {niceIEEE754(coefficients[0][0])}</span>;
+  }
+
+  if (mode === Mode['y=b1x']) {
+    return <span>y = {niceIEEE754(coefficients[0][0])}x</span>
+  }
+
+  if (mode === Mode['y=b1+b2x']) {
+    const b2 = coefficients[1][0];
+    return <span>y = {niceIEEE754(coefficients[0][0])} {b2 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b2))}x</span>
+  }
+
+  if (mode === Mode['y=b1x^2']) {
+    return <span>y = {niceIEEE754(coefficients[0][0])}x<sup>2</sup></span>
+  }
+
+  if (mode === Mode['y=b1+b2x^2']) {
+    const b2 = coefficients[1][0];
+    return <span>y = {niceIEEE754(coefficients[0][0])} {b2 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b2))}x<sup>2</sup></span>
+  }
+
+  if (mode === Mode['y=b1+b2x+b3x^2']) {
+    const b2 = coefficients[1][0];
+    const b3 = coefficients[2][0];
+    return <span>y = {niceIEEE754(coefficients[0][0])} {b2 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b2))}x {b3 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b3))}x<sup>2</sup></span>
+  }
+
+  return null;
 }
