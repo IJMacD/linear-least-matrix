@@ -2,24 +2,21 @@ import { useState } from 'react'
 import './App.css'
 import { Graph } from './Graph';
 import { transpose, mul, inv } from './matrix';
+import { niceIEEE754 } from './niceIEEE754';
+import { modes } from './modes';
 
-enum Mode {
-  "y=b1",
-  "y=b1x",
-  "y=b1+b2x",
-  "y=b1x^2",
-  "y=b1+b2x^2",
-  "y=b1+b2x+b3x^2",
-};
+type Mode = keyof typeof modes;
 
 function App() {
   const [pointsInput,setPointsInput] = useState("");
-  const [mode, setMode] = useState(Mode['y=b1+b2x']);
+  const [mode, setMode] = useState('y=b1+b2x' as Mode);
 
   const points = parsePoints(pointsInput);
 
+  const modeObject = modes[mode];
+
   const yValues = points.map(p => [p[1]]);
-  const xValues = getXValues(mode, points);
+  const xValues = modeObject.getXValues(points);
 
   const xt = transpose(xValues);
   const xtx = mul(xt, xValues);
@@ -40,12 +37,9 @@ function App() {
         <b>y</b> = <b>X</b> β
       </p>
       <ul className='mode-selector'>
-        <li className={mode === Mode['y=b1']?"active":""} onClick={() => setMode(Mode['y=b1'])}>y = β<sub>1</sub></li>
-        <li className={mode === Mode['y=b1x']?"active":""} onClick={() => setMode(Mode['y=b1x'])}>y = β<sub>1</sub> x</li>
-        <li className={mode === Mode['y=b1+b2x']?"active":""} onClick={() => setMode(Mode['y=b1+b2x'])}>y = β<sub>1</sub> + β<sub>2</sub> x</li>
-        <li className={mode === Mode['y=b1x^2']?"active":""} onClick={() => setMode(Mode['y=b1x^2'])}>y = β<sub>1</sub> x<sup>2</sup></li>
-        <li className={mode === Mode['y=b1+b2x^2']?"active":""} onClick={() => setMode(Mode['y=b1+b2x^2'])}>y = β<sub>1</sub> + β<sub>2</sub> x<sup>2</sup></li>
-        <li className={mode === Mode['y=b1+b2x+b3x^2']?"active":""} onClick={() => setMode(Mode['y=b1+b2x+b3x^2'])}>y = β<sub>1</sub> + β<sub>2</sub> x + β<sub>3</sub> x<sup>2</sup></li>
+        {
+          Object.keys(modes).map(modeKey => <li className={mode === modeKey?"active":""} onClick={() => setMode(modeKey as Mode)}>{modes[modeKey as Mode].display}</li>)
+        }
       </ul>
       <div style={{display:"flex",margin:10}}>
         <p>
@@ -96,62 +90,11 @@ function App() {
 
 export default App
 
-function getXValues(mode: Mode, points: number[][]) {
-  if (mode === Mode['y=b1']) {
-    return points.map(() => [1]);
-  }
-
-  if (mode === Mode['y=b1x']) {
-    return points.map(p => [p[0]]);
-  }
-
-  if (mode === Mode['y=b1+b2x']) {
-    return points.map(p => [1, p[0]]);
-  }
-
-  if (mode === Mode['y=b1x^2']) {
-    return points.map(p => [p[0] * p[0]]);
-  }
-
-  if (mode === Mode['y=b1+b2x^2']) {
-    return points.map(p => [1, p[0] * p[0]]);
-  }
-
-  if (mode === Mode['y=b1+b2x+b3x^2']) {
-    return points.map(p => [1, p[0], p[0] * p[0]])
-  }
-
-  return [];
-}
 
 function getTrendFn(mode: Mode, beta: number[][]) {
   if (beta.length === 0) return undefined;
 
-  if (mode === Mode['y=b1']) {
-    return () => beta[0][0];
-  }
-
-  if (mode === Mode['y=b1x']) {
-    return (x: number) => beta[0][0] * x;
-  }
-
-  if (mode === Mode['y=b1+b2x']) {
-    return (x: number) => beta[0][0] + beta[1][0] * x;
-  }
-
-  if (mode === Mode['y=b1x^2']) {
-    return (x: number) => beta[0][0] * x * x;
-  }
-
-  if (mode === Mode['y=b1+b2x^2']) {
-    return (x: number) => beta[0][0] + beta[1][0] * x * x;
-  }
-
-  if (mode === Mode['y=b1+b2x+b3x^2']) {
-    return (x: number) => beta[0][0] + beta[1][0] * x + beta[2][0] * x * x;
-  }
-
-  return undefined;
+  return modes[mode].getTrendFn(beta);
 }
 
 function MatrixDisplay({ values }: { values: number[][] }) {
@@ -164,17 +107,6 @@ function MatrixDisplay({ values }: { values: number[][] }) {
   );
 }
 
-function niceIEEE754 (n: number) {
-  if (!n) return n;
-  const s = n.toString();
-  const dp = s.indexOf(".");
-  const a = /00000|99999/.exec(s.substring(dp+1));
-  if (a) {
-    return n.toFixed(a.index);
-  }
-  return s;
-}
-
 function parsePoints (input: string) {
   return input.split("\n").filter(l => l.length).map(line => line.trim().replace(/[^-\d,.\s]/g, "").split(/[,\s]+/,2).map(s => +s));
 }
@@ -182,33 +114,5 @@ function parsePoints (input: string) {
 function TrendlineDisplay ({ mode, coefficients }: { mode: Mode, coefficients: number[][] }) {
   if (coefficients.length === 0) return null;
 
-  if (mode === Mode['y=b1']) {
-    return <span>y = {niceIEEE754(coefficients[0][0])}</span>;
-  }
-
-  if (mode === Mode['y=b1x']) {
-    return <span>y = {niceIEEE754(coefficients[0][0])}x</span>
-  }
-
-  if (mode === Mode['y=b1+b2x']) {
-    const b2 = coefficients[1][0];
-    return <span>y = {niceIEEE754(coefficients[0][0])} {b2 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b2))}x</span>
-  }
-
-  if (mode === Mode['y=b1x^2']) {
-    return <span>y = {niceIEEE754(coefficients[0][0])}x<sup>2</sup></span>
-  }
-
-  if (mode === Mode['y=b1+b2x^2']) {
-    const b2 = coefficients[1][0];
-    return <span>y = {niceIEEE754(coefficients[0][0])} {b2 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b2))}x<sup>2</sup></span>
-  }
-
-  if (mode === Mode['y=b1+b2x+b3x^2']) {
-    const b2 = coefficients[1][0];
-    const b3 = coefficients[2][0];
-    return <span>y = {niceIEEE754(coefficients[0][0])} {b2 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b2))}x {b3 < 0 ? "-" : "+"} {niceIEEE754(Math.abs(b3))}x<sup>2</sup></span>
-  }
-
-  return null;
+  return modes[mode].getTrendlineDisplay(coefficients);
 }
