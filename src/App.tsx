@@ -38,7 +38,7 @@ function App() {
       </p>
       <ul className='mode-selector'>
         {
-          Object.keys(modes).map(modeKey => <li className={mode === modeKey?"active":""} onClick={() => setMode(modeKey as Mode)}>{modes[modeKey as Mode].display}</li>)
+          Object.keys(modes).map(modeKey => <li key={modeKey} className={mode === modeKey?"active":""} onClick={() => setMode(modeKey as Mode)}>{modes[modeKey as Mode].display}</li>)
         }
       </ul>
       <div style={{display:"flex",margin:10}}>
@@ -108,7 +108,7 @@ function MatrixDisplay({ values }: { values: number[][] }) {
 }
 
 function parsePoints (input: string) {
-  return input.split("\n").filter(l => l.length).map(line => line.trim().replace(/[^-\d,.\s]/g, "").split(/[,\s]+/,2).map(s => +s));
+  return input.trim().split("\n").filter(l => l.length).map(line => line.trim().replace(/[^-\d,.\s]/g, "").split(/[,\s]+/,2).map(s => +s));
 }
 
 function TrendlineDisplay ({ mode, coefficients }: { mode: Mode, coefficients: number[][] }) {
