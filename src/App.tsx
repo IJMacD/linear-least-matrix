@@ -26,12 +26,20 @@ function App() {
 
   const trendFn = getTrendFn(mode, beta);
 
+  const sumR2 = trendFn ? points.reduce((total, point) => total + Math.pow(point[1] - trendFn(point[0]), 2), 0) : NaN;
+
   return (
     <>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
         <textarea value={pointsInput} onChange={e => setPointsInput(e.target.value)} placeholder='Points' style={{height: 80}}/>
         <Graph points={points} trendFn={trendFn} />
         <TrendlineDisplay mode={mode} coefficients={beta} />
+        {
+          !isNaN(sumR2) &&
+          <p style={{margin:"1em 2em"}}>
+            ∑ r<sup>2</sup> = {sumR2.toPrecision(2)}
+          </p>
+        }
       </div>
       <p>
         <b>y</b> = <b>X</b> β
@@ -113,6 +121,8 @@ function parsePoints (input: string) {
 
 function TrendlineDisplay ({ mode, coefficients }: { mode: Mode, coefficients: number[][] }) {
   if (coefficients.length === 0) return null;
+
+  if (coefficients.some(c => isNaN(c[0]))) return null;
 
   return modes[mode].getTrendlineDisplay(coefficients);
 }

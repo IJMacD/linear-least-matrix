@@ -12,11 +12,11 @@ export function Graph ({ points, trendFn = undefined, width = 256, height = 256 
         const gutter = 5 * devicePixelRatio;
         const r = 5 * devicePixelRatio;
 
-        const xMax = Math.max(...points.map(p => p[0])) * 1.1;
-        const yMax = Math.max(...points.map(p => p[1])) * 1.1;
+        const xMax = Math.max(...points.map(p => p[0]||0)) * 1.1;
+        const yMax = Math.max(...points.map(p => p[1]||0)) * 1.1;
 
-        const xMin = Math.min(0, ...points.map(p => p[0])) * 1.1;
-        const yMin = Math.min(0, ...points.map(p => p[1])) * 1.1;
+        const xMin = Math.min(0, ...points.map(p => p[0]||0)) * 1.1;
+        const yMin = Math.min(0, ...points.map(p => p[1]||0)) * 1.1;
 
         const xRange = xMax - xMin;
         const yRange = yMax - yMin;
