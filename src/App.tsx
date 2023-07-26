@@ -26,7 +26,10 @@ function App() {
 
   const trendFn = getTrendFn(mode, beta);
 
-  const sumR2 = trendFn ? points.reduce((total, point) => total + Math.pow(point[1] - trendFn(point[0]), 2), 0) : NaN;
+  const avgY = yValues.length > 0 ? yValues.reduce((total, y) => total + y[0], 0) / yValues.length : 1;
+  const ss_res = trendFn ? points.reduce((total, point) => total + Math.pow(point[1] - trendFn(point[0]), 2), 0) : NaN;
+  const ss_tot = yValues.reduce((total, y) => total + Math.pow(y[0] - avgY, 2), 0);
+  const rSquared = 1 - (ss_res / ss_tot);
 
   return (
     <>
@@ -35,9 +38,9 @@ function App() {
         <Graph points={points} trendFn={trendFn} />
         <TrendlineDisplay mode={mode} coefficients={beta} />
         {
-          !isNaN(sumR2) &&
+          !isNaN(ss_res) &&
           <p style={{margin:"1em 2em"}}>
-            ∑ r<sup>2</sup> = {sumR2.toPrecision(2)}
+            R<sup>2</sup> = {rSquared.toPrecision(4)}
           </p>
         }
       </div>
