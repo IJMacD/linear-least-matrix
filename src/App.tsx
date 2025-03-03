@@ -45,7 +45,7 @@ function App() {
         }
       </div>
       <p>
-        <b>y</b> = <b>X</b> β
+        <math><mi style={{fontWeight:"bold"}}>y</mi> <mo>=</mo> <mi style={{fontWeight:"bold"}}>X</mi> <mi>β</mi></math>
       </p>
       <ul className='mode-selector'>
         {
@@ -83,7 +83,7 @@ function App() {
         <MatrixDisplay values={inv_xtx} />
       </div>
       <div style={{display:"flex",margin:10}}>
-        <p>
+        <p style={{minWidth: 100, textAlign: "left"}}>
           (X<sup>T</sup> X)<sup>-1</sup> X<sup>T</sup> =
         </p>
         <MatrixDisplay values={inv_xtx_xt} />
