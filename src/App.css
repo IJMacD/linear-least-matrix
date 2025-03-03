@@ -11,6 +11,12 @@
   margin-left: 0.5em;
 }
 
+@media (prefers-color-scheme: light) {
+  .matrix-table {
+    border-color: #333;
+  }
+}
+
 .matrix-table td {
   padding: 4px;
 }
@@ -52,4 +58,18 @@
 
 .mode-selector li.active {
   border-color: #ffffff;
+}
+
+@media (prefers-color-scheme: light) {
+  .mode-selector li {
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .mode-selector li:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .mode-selector li.active {
+    border-color: #333;
+  }
 }

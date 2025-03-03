@@ -34,7 +34,7 @@ function App() {
   return (
     <>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <textarea value={pointsInput} onChange={e => setPointsInput(e.target.value)} placeholder='Points' style={{height: 80}}/>
+        <textarea value={pointsInput} onChange={e => setPointsInput(e.target.value)} placeholder='Points' style={{height: 256}}/>
         <Graph points={points} trendFn={trendFn} />
         <TrendlineDisplay mode={mode} coefficients={beta} />
         {
