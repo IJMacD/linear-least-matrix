@@ -3,17 +3,44 @@ import './App.css'
 import { Graph } from './Graph';
 import { transpose, mul, inv } from './matrix';
 import { niceIEEE754 } from './niceIEEE754';
-import { modes } from './modes';
+import { Equation, EquationDisplay, makeModeObject, Mode, Term } from './equation';
 
-type Mode = keyof typeof modes;
+const modes: Equation[] = [
+  { terms: [Term.Constant] },
+  { terms: [Term.Linear] },
+  { terms: [Term.Constant, Term.Linear] },
+  { terms: [Term.Quadratic] },
+  { terms: [Term.Constant, Term.Quadratic] },
+  { terms: [Term.Constant, Term.Linear, Term.Quadratic] },
+  { terms: [Term.SquareRoot] },
+  { terms: [Term.Constant, Term.SquareRoot] },
+  { terms: [Term.Inverse] },
+  { terms: [Term.Constant, Term.Inverse] },
+  { terms: [Term.Constant, Term.Sin] },
+  { terms: [Term.Constant, Term.Cos] },
+  { terms: [Term.Constant, Term.Sin2x] },
+  { terms: [Term.Constant, Term.Cos2x] },
+  { terms: [Term.Constant, Term.Sin4x] },
+  { terms: [Term.Constant, Term.Cos4x] },
+  { terms: [Term.Constant, Term.SinHalfX] },
+  { terms: [Term.Constant, Term.CosHalfX] },
+  { terms: [Term.Constant, Term.SinSquared] },
+  { terms: [Term.Constant, Term.CosSquared] },
+  { terms: [Term.Constant, Term.SinXSquared] },
+  { terms: [Term.Constant, Term.CosXSquared] },
+  { terms: [Term.Exp] },
+  { terms: [Term.Constant, Term.Exp] },
+  { terms: [Term.Log] },
+  { terms: [Term.Constant, Term.Log] },
+]
 
 function App() {
-  const [pointsInput,setPointsInput] = useState("");
-  const [mode, setMode] = useState('y=b1+b2x' as Mode);
+  const [pointsInput, setPointsInput] = useState("");
+  const [selectedModeIndex, setSelectedModeIndex] = useState(2);
 
   const points = parsePoints(pointsInput);
 
-  const modeObject = modes[mode];
+  const modeObject = makeModeObject(modes[selectedModeIndex]);
 
   const yValues = points.map(p => [p[1]]);
   const xValues = modeObject.getXValues(points);
@@ -24,7 +51,7 @@ function App() {
   const inv_xtx_xt = mul(inv_xtx, xt);
   const beta = mul(inv_xtx_xt, yValues);
 
-  const trendFn = getTrendFn(mode, beta);
+  const trendFn = modeObject.getTrendFn(beta);
 
   const avgY = yValues.length > 0 ? yValues.reduce((total, y) => total + y[0], 0) / yValues.length : 1;
   const ss_res = trendFn ? points.reduce((total, point) => total + Math.pow(point[1] - trendFn(point[0]), 2), 0) : NaN;
@@ -36,11 +63,11 @@ function App() {
       <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
         <textarea value={pointsInput} onChange={e => setPointsInput(e.target.value)} placeholder='Points' style={{height: 256}}/>
         <Graph points={points} trendFn={trendFn} />
-        <TrendlineDisplay mode={mode} coefficients={beta} />
+        <TrendLineDisplay mode={modeObject} coefficients={beta} />
         {
           !isNaN(ss_res) &&
           <p style={{margin:"1em 2em"}}>
-            R<sup>2</sup> = {rSquared.toPrecision(4)}
+            <math><msup><mi>R</mi><mn>2</mn></msup> <mo>=</mo> <mn>{rSquared.toPrecision(4)}</mn></math>
           </p>
         }
       </div>
@@ -49,7 +76,7 @@ function App() {
       </p>
       <ul className='mode-selector'>
         {
-          Object.keys(modes).map(modeKey => <li key={modeKey} className={mode === modeKey?"active":""} onClick={() => setMode(modeKey as Mode)}>{modes[modeKey as Mode].display}</li>)
+          modes.map((m, i) => <li key={i} className={i === selectedModeIndex?"active":""} onClick={() => setSelectedModeIndex(i)}><EquationDisplay equation={m} /></li>)
         }
       </ul>
       <div style={{display:"flex",margin:10}}>
@@ -101,13 +128,6 @@ function App() {
 
 export default App
 
-
-function getTrendFn(mode: Mode, beta: number[][]) {
-  if (beta.length === 0) return undefined;
-
-  return modes[mode].getTrendFn(beta);
-}
-
 function MatrixDisplay({ values }: { values: number[][] }) {
   return (
     <table className='matrix-table'>
@@ -118,14 +138,14 @@ function MatrixDisplay({ values }: { values: number[][] }) {
   );
 }
 
-function parsePoints (input: string) {
-  return input.trim().split("\n").filter(l => l.length).map(line => line.trim().replace(/[^-\d,.\s]/g, "").split(/[,\s]+/,2).map(s => +s));
+function parsePoints (input: string): [number, number][] {
+  return input.trim().split("\n").filter(l => l.length).map(line => line.trim().replace(/[^-\d,.\s]/g, "").split(/[,\s]+/,2).map(s => +s)) as [number, number][];
 }
 
-function TrendlineDisplay ({ mode, coefficients }: { mode: Mode, coefficients: number[][] }) {
+function TrendLineDisplay ({ mode, coefficients }: { mode: Mode, coefficients: number[][] }) {
   if (coefficients.length === 0) return null;
 
   if (coefficients.some(c => isNaN(c[0]))) return null;
 
-  return modes[mode].getTrendlineDisplay(coefficients);
+  return mode.getTrendLineDisplay(coefficients);
 }

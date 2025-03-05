@@ -1,4 +1,4 @@
-import * as React from "react";
+import type * as React from "react";
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -7,6 +7,10 @@ declare global {
         HTMLElement
       >;
       msub: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
+      mrow: React.DetailedHTMLProps<
         React.HTMLAttributes<HTMLElement>,
         HTMLElement
       >;
