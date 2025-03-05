@@ -18,8 +18,16 @@ export enum Term {
   Cos,
   Sin2x,
   Cos2x,
+  Sin3x,
+  Cos3x,
   Sin4x,
   Cos4x,
+  Sin5x,
+  Cos5x,
+  Sin6x,
+  Sin7x,
+  Sin8x,
+  Sin9x,
   SinHalfX,
   CosHalfX,
   SinQuarterX,
@@ -32,13 +40,11 @@ export enum Term {
   Log,
 }
 
-export interface Equation {
-  terms: Term[];
-}
+export type Equation = Term[];
 
 export interface Mode {
   getXValues: (points: [number, number][]) => Matrix,
-  getTrendFn: (coefficients: Matrix) => (x: number) => number,
+  getTrendFn: (coefficients: Matrix) => ((x: number) => number)|null,
   getTrendLineDisplay: (coefficients: Matrix) => React.ReactNode,
 }
 
@@ -56,7 +62,7 @@ export function EquationDisplay ({equation}: {equation: Equation}): React.ReactN
       <mi>y</mi>
       <mo>=</mo>
       {
-        equation.terms.map((t, i) => {
+        equation.map((t, i) => {
           const d = getTermDisplay(t);
           const c = <msub><mi>β</mi><mn>{i}</mn></msub>;
           return <React.Fragment key={i}>{i > 0 ? <mo>+</mo>:null}{c}{d}</React.Fragment>;
@@ -68,12 +74,12 @@ export function EquationDisplay ({equation}: {equation: Equation}): React.ReactN
 
 function getXValueFn (equation: Equation) {
   return function (points: [number, number][]): number[][] {
-    return points.map(([x]) => equation.terms.map(t => getTermFn(t)(x)));
+    return points.map(([x]) => equation.map(t => getTermFn(t)(x)));
   }
 }
 
 function getTrendFnFn (equation: Equation) {
-  return (coefficients: Matrix) => (x: number) => equation.terms.map((t, i) => coefficients[i][0] * getTermFn(t)(x)).reduce((s, t) => s + t, 0);
+  return (coefficients: Matrix) => coefficients.length > 0 ? (x: number) => equation.map((t, i) => coefficients[i][0] * getTermFn(t)(x)).reduce((s, t) => s + t, 0) : null;
 }
 
 function getTrendLineDisplayFn (equation: Equation) {
@@ -85,7 +91,7 @@ function getTrendLineDisplayFn (equation: Equation) {
         <mi>y</mi>
         <mo>=</mo>
         {
-          equation.terms.map((t, i) => {
+          equation.map((t, i) => {
             const c = coefficients[i][0];
             const _c = niceIEEE754(Math.abs(c));
             if (_c === 0) return null;
@@ -142,8 +148,16 @@ function getTermDisplay (term: Term): React.ReactNode {
     case Term.Cos: return <><mi>cos</mi><mi>x</mi></>
     case Term.Sin2x: return <><mi>sin</mi><mn>2</mn><mi>x</mi></>
     case Term.Cos2x: return <><mi>cos</mi><mn>2</mn><mi>x</mi></>
+    case Term.Sin3x: return <><mi>sin</mi><mn>3</mn><mi>x</mi></>
+    case Term.Cos3x: return <><mi>cos</mi><mn>3</mn><mi>x</mi></>
     case Term.Sin4x: return <><mi>sin</mi><mn>4</mn><mi>x</mi></>
     case Term.Cos4x: return <><mi>cos</mi><mn>4</mn><mi>x</mi></>
+    case Term.Sin5x: return <><mi>sin</mi><mn>5</mn><mi>x</mi></>
+    case Term.Cos5x: return <><mi>cos</mi><mn>5</mn><mi>x</mi></>
+    case Term.Sin6x: return <><mi>sin</mi><mn>6</mn><mi>x</mi></>
+    case Term.Sin7x: return <><mi>sin</mi><mn>7</mn><mi>x</mi></>
+    case Term.Sin8x: return <><mi>sin</mi><mn>8</mn><mi>x</mi></>
+    case Term.Sin9x: return <><mi>sin</mi><mn>9</mn><mi>x</mi></>
     case Term.SinHalfX: return <><mi>sin</mi><mfrac><mi>x</mi><mn>2</mn></mfrac></>
     case Term.CosHalfX: return <><mi>cos</mi><mfrac><mi>x</mi><mn>2</mn></mfrac></>
     case Term.SinQuarterX: return <><mi>cos</mi><mfrac><mi>x</mi><mn>4</mn></mfrac></>
@@ -171,8 +185,16 @@ function getTermFn (term: Term): (x: number) => number {
     case Term.Cos: return Math.cos;
     case Term.Sin2x: return x => Math.sin(2 * x);
     case Term.Cos2x: return x => Math.cos(2 * x);
+    case Term.Sin3x: return x => Math.sin(3 * x);
+    case Term.Cos3x: return x => Math.cos(3 * x);
     case Term.Sin4x: return x => Math.sin(4 * x);
     case Term.Cos4x: return x => Math.cos(4 * x);
+    case Term.Sin5x: return x => Math.sin(5 * x);
+    case Term.Cos5x: return x => Math.cos(5 * x);
+    case Term.Sin6x: return x => Math.sin(6 * x);
+    case Term.Sin7x: return x => Math.sin(7 * x);
+    case Term.Sin8x: return x => Math.sin(8 * x);
+    case Term.Sin9x: return x => Math.sin(9 * x);
     case Term.SinHalfX: return x => Math.sin(x / 2);
     case Term.CosHalfX: return x => Math.cos(x / 2);
     case Term.SinQuarterX: return x => Math.sin(x / 4);

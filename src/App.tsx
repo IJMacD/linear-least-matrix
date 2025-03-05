@@ -6,32 +6,38 @@ import { niceIEEE754 } from './niceIEEE754';
 import { Equation, EquationDisplay, makeModeObject, Mode, Term } from './equation';
 
 const modes: Equation[] = [
-  { terms: [Term.Constant] },
-  { terms: [Term.Linear] },
-  { terms: [Term.Constant, Term.Linear] },
-  { terms: [Term.Quadratic] },
-  { terms: [Term.Constant, Term.Quadratic] },
-  { terms: [Term.Constant, Term.Linear, Term.Quadratic] },
-  { terms: [Term.SquareRoot] },
-  { terms: [Term.Constant, Term.SquareRoot] },
-  { terms: [Term.Inverse] },
-  { terms: [Term.Constant, Term.Inverse] },
-  { terms: [Term.Constant, Term.Sin] },
-  { terms: [Term.Constant, Term.Cos] },
-  { terms: [Term.Constant, Term.Sin2x] },
-  { terms: [Term.Constant, Term.Cos2x] },
-  { terms: [Term.Constant, Term.Sin4x] },
-  { terms: [Term.Constant, Term.Cos4x] },
-  { terms: [Term.Constant, Term.SinHalfX] },
-  { terms: [Term.Constant, Term.CosHalfX] },
-  { terms: [Term.Constant, Term.SinSquared] },
-  { terms: [Term.Constant, Term.CosSquared] },
-  { terms: [Term.Constant, Term.SinXSquared] },
-  { terms: [Term.Constant, Term.CosXSquared] },
-  { terms: [Term.Exp] },
-  { terms: [Term.Constant, Term.Exp] },
-  { terms: [Term.Log] },
-  { terms: [Term.Constant, Term.Log] },
+  [Term.Constant],
+  [Term.Linear],
+  [Term.Constant, Term.Linear],
+  [Term.Quadratic],
+  [Term.Constant, Term.Quadratic],
+  [Term.Constant, Term.Linear, Term.Quadratic],
+  [Term.SquareRoot],
+  [Term.Constant, Term.SquareRoot],
+  [Term.Inverse],
+  [Term.Constant, Term.Inverse],
+  [Term.Constant, Term.Sin],
+  [Term.Constant, Term.Cos],
+  [Term.Constant, Term.Sin2x],
+  [Term.Constant, Term.Cos2x],
+  [Term.Constant, Term.Sin4x],
+  [Term.Constant, Term.Cos4x],
+  [Term.Constant, Term.SinHalfX],
+  [Term.Constant, Term.CosHalfX],
+  [Term.Constant, Term.SinSquared],
+  [Term.Constant, Term.CosSquared],
+  [Term.Constant, Term.SinXSquared],
+  [Term.Constant, Term.CosXSquared],
+  [Term.Exp],
+  [Term.Constant, Term.Exp],
+  [Term.Log],
+  [Term.Constant, Term.Log],
+  [Term.Sin, Term.Sin2x, Term.Sin3x, Term.Sin4x],
+  [Term.Cos, Term.Cos2x, Term.Cos3x, Term.Cos4x],
+  [Term.Sin, Term.Sin2x, Term.Sin3x, Term.Sin4x, Term.Sin5x],
+  [Term.Cos, Term.Cos2x, Term.Cos3x, Term.Cos4x, Term.Cos5x],
+  [Term.Sin, Term.Sin2x, Term.Sin3x, Term.Sin4x, Term.Sin5x, Term.Sin6x],
+  [Term.Sin, Term.Sin3x, Term.Sin5x, Term.Sin7x, Term.Sin9x],
 ]
 
 function App() {
@@ -54,7 +60,7 @@ function App() {
   const trendFn = modeObject.getTrendFn(beta);
 
   const avgY = yValues.length > 0 ? yValues.reduce((total, y) => total + y[0], 0) / yValues.length : 1;
-  const ss_res = trendFn ? points.reduce((total, point) => total + Math.pow(point[1] - trendFn(point[0]), 2), 0) : NaN;
+  const ss_res = trendFn && beta.length > 0 ? points.reduce((total, point) => total + Math.pow(point[1] - trendFn(point[0]), 2), 0) : NaN;
   const ss_tot = yValues.reduce((total, y) => total + Math.pow(y[0] - avgY, 2), 0);
   const rSquared = 1 - (ss_res / ss_tot);
 
@@ -62,7 +68,7 @@ function App() {
     <>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center"}}>
         <textarea value={pointsInput} onChange={e => setPointsInput(e.target.value)} placeholder='Points' style={{height: 256}}/>
-        <Graph points={points} trendFn={trendFn} />
+        <Graph points={points} trendFn={trendFn||void 0} />
         <TrendLineDisplay mode={modeObject} coefficients={beta} />
         {
           !isNaN(ss_res) &&

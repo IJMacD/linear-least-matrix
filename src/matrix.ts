@@ -63,19 +63,16 @@ function adj(a: number[][]) {
   }
 
   if (w === 2) {
-    return [[a[1][1], -a[0][1]], [-a[1][0], a[0][0]]];
+    return [
+      [a[1][1], -a[0][1]],
+      [-a[1][0], a[0][0]],
+    ];
   }
 
-  if (w === 3) {
-    return transpose(cofactor(a));
-  }
-
-  console.info(`Cannot compute adjugate of ${h}x${w} matrix`);
-
-  return [];
+  return transpose(cofactor(a));
 }
 
-function det(a: number[][]) {
+export function det(a: number[][]) {
   const w = a.length;
 
   if (w === 0) return 1;
@@ -95,18 +92,22 @@ function det(a: number[][]) {
 
   if (w === 3) {
     return (
-        a[0][0] * a[1][1] * a[2][2]
-      + a[0][1] * a[1][2] * a[2][0]
-      + a[0][2] * a[1][0] * a[2][1]
-      - a[0][2] * a[1][1] * a[2][0]
-      - a[0][1] * a[1][0] * a[2][2]
-      - a[0][0] * a[1][2] * a[2][1]
+      a[0][0] * a[1][1] * a[2][2] +
+      a[0][1] * a[1][2] * a[2][0] +
+      a[0][2] * a[1][0] * a[2][1] -
+      a[0][2] * a[1][1] * a[2][0] -
+      a[0][1] * a[1][0] * a[2][2] -
+      a[0][0] * a[1][2] * a[2][1]
     );
   }
 
-  console.info(`Cannot compute determinate of ${h}x${w} matrix`);
+  const row = a[0];
+  let sum = 0;
+  for (let i = 0; i < w; i++) {
+    sum += Math.pow(-1, i) * row[i] * det(subMatrix(a, i, 0));
+  }
 
-  return 1;
+  return sum;
 }
 
 function scalarMul(a: number[][], s: number) {
@@ -124,7 +125,7 @@ export function inv(a: number[][]) {
   return scalarMul(adj(a), 1 / det(a));
 }
 
-function cofactor (a: number[][]) {
+function cofactor(a: number[][]) {
   const w = a.length;
 
   if (w === 0) return [];
@@ -133,15 +134,13 @@ function cofactor (a: number[][]) {
 
   if (w !== h) return [];
 
-  if (w !== 3) return [];
-
   const out: number[][] = [];
 
   for (let j = 0; j < h; j++) {
-    out[j] = [];;
+    out[j] = [];
     for (let i = 0; i < w; i++) {
       const sm = subMatrix(a, i, j);
-      const parity = ((i + j) % 2) ? -1 : 1;
+      const parity = (i + j) % 2 ? -1 : 1;
       out[j][i] = parity * det(sm);
     }
   }
@@ -149,19 +148,19 @@ function cofactor (a: number[][]) {
   return out;
 }
 
-function subMatrix (a: number[][], x: number, y: number) {
+function subMatrix(a: number[][], x: number, y: number) {
   const w = a.length;
 
   if (w === 0) return [];
 
   const h = a[0].length;
 
-  const out:number[][] = [];
+  const out: number[][] = [];
 
   for (let j = 0; j < h - 1; j++) {
     out[j] = [];
     for (let i = 0; i < w - 1; i++) {
-      out[j][i] = a[j<y?j:j+1][i<x?i:i+1];
+      out[j][i] = a[j < y ? j : j + 1][i < x ? i : i + 1];
     }
   }
 
