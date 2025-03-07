@@ -104,7 +104,7 @@ function getTrendLineDisplayFn (equation: Equation) {
             if (t === Term.Inverse) {
               return (
                 <>
-                  {(!f || c < 0) && <mo>{c < 0 ? "-" : "+"}</mo> }
+                  {(!f || c < 0) && <mo>{c < 0 ? "−" : "+"}</mo>}
                   <mfrac><mn>{_c}</mn><mi>x</mi></mfrac>
                 </>
               );
@@ -119,7 +119,7 @@ function getTrendLineDisplayFn (equation: Equation) {
                       <mn>{niceIEEE754(c)}</mn>
                       :
                       <>
-                        <mo>{c < 0 ? "-" : "+"}</mo>
+                        <mo>{c < 0 ? "−" : "+"}</mo>
                         {_c === 1 ? null : <mn>{_c}</mn>}
                       </>
                     )
